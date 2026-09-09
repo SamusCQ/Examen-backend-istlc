@@ -1,13 +1,21 @@
 using System.ComponentModel.DataAnnotations;
 using ExamenBackendApi.Dtos;
+using ExamenBackendApi.HealthChecks;
 using ExamenBackendApi.Models;
 using ExamenBackendApi.Repositories;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Registramos el repositorio como Singleton porque la información vive en memoria.
 // Así, todos los endpoints comparten la misma lista mientras la aplicación está activa.
 builder.Services.AddSingleton<IUsuarioRepository, UsuarioRepository>();
+
+// Registramos health checks para comprobar que la API está activa y que el
+// repositorio en memoria puede leer correctamente la información.
+builder.Services.AddHealthChecks()
+    .AddCheck("api", () => HealthCheckResult.Healthy("La API está activa."))
+    .AddCheck<MemoriaHealthCheck>("almacenamiento-en-memoria");
 
 // Estas dos líneas permiten que Swagger descubra y documente los endpoints
 // definidos con Minimal API.
@@ -44,9 +52,36 @@ app.MapGet("/", () => Results.Ok(new
         "GET /api/usuarios",
         "GET /api/usuarios/{id}",
         "POST /api/usuarios",
-        "DELETE /api/usuarios/{id}"
+        "DELETE /api/usuarios/{id}",
+        "GET /health"
     }
 }));
+
+// GET /health
+// Devuelve un resumen JSON del estado general de la API y de cada comprobación.
+// Responde 200 cuando todo está saludable y 503 si alguna comprobación falla.
+app.MapGet("/health", async (HealthCheckService servicioHealth) =>
+{
+    var reporte = await servicioHealth.CheckHealthAsync();
+    var codigoHttp = reporte.Status == HealthStatus.Healthy
+        ? StatusCodes.Status200OK
+        : StatusCodes.Status503ServiceUnavailable;
+
+    var comprobaciones = reporte.Entries.ToDictionary(
+        entrada => entrada.Key,
+        entrada => new
+        {
+            estado = entrada.Value.Status.ToString(),
+            descripcion = entrada.Value.Description,
+            datos = entrada.Value.Data
+        });
+
+    return Results.Json(new
+    {
+        estado = reporte.Status.ToString(),
+        comprobaciones
+    }, statusCode: codigoHttp);
+});
 
 // GET /api/usuarios
 // Devuelve todos los usuarios registrados en memoria.

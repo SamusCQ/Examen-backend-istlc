@@ -8,6 +8,154 @@ detiene la aplicación.
 
 También incluye Swagger UI para consultar y probar los endpoints desde el navegador.
 
+## Crear el proyecto desde cero en Visual Studio
+
+Si vas a clonar este repositorio, puedes saltar esta sección porque el proyecto
+ya está creado. Estos son los pasos para construirlo manualmente desde cero.
+
+### 1. Crear el proyecto
+
+1. Abre Visual Studio 2022.
+2. Selecciona **Crear un nuevo proyecto**.
+3. Busca y selecciona **ASP.NET Core Empty**.
+   - Lenguaje: **C#**.
+   - Tipo de proyecto: **Web**.
+   - Esta plantilla es adecuada porque el proyecto utiliza **Minimal API** y no controladores.
+4. Presiona **Siguiente**.
+5. Configura el proyecto:
+   - Nombre: `ExamenBackendApi`.
+   - Ubicación: la carpeta donde guardarás el proyecto.
+   - Solución: puede tener el mismo nombre `ExamenBackendApi`.
+6. Presiona **Siguiente**.
+7. En información adicional selecciona:
+   - Framework: **.NET 8.0 (Long Term Support)**.
+   - Tipo de autenticación: **Ninguno**.
+   - **Configurar para HTTPS**: activado.
+   - Docker: desactivado.
+8. Presiona **Crear**.
+
+La opción **Configurar para HTTPS** es la razón por la que Visual Studio puede
+abrir una dirección parecida a `https://localhost:62565`. El número de puerto
+puede cambiar en cada equipo.
+
+### 2. Crear las carpetas
+
+En el Explorador de soluciones, haz clic derecho sobre el proyecto y selecciona
+**Agregar > Nueva carpeta**. Crea estas carpetas:
+
+```text
+Dtos
+HealthChecks
+Models
+Repositories
+```
+
+### 3. Crear los archivos
+
+Agrega los siguientes archivos usando **Agregar > Clase** y copia el contenido
+correspondiente desde este repositorio:
+
+```text
+Dtos/CrearUsuarioRequest.cs
+HealthChecks/MemoriaHealthCheck.cs
+Models/Usuario.cs
+Repositories/IUsuarioRepository.cs
+Repositories/UsuarioRepository.cs
+```
+
+Después reemplaza el contenido de `Program.cs` con el archivo de este proyecto.
+Ese archivo configura los endpoints, Swagger, health check, validaciones y
+registro de peticiones en consola.
+
+### 4. Instalar Swagger
+
+Desde Visual Studio puedes instalar el paquete así:
+
+1. Ve a **Herramientas > Administrador de paquetes NuGet > Administrar paquetes NuGet para la solución**.
+2. Abre la pestaña **Examinar**.
+3. Busca `Swashbuckle.AspNetCore`.
+4. Selecciona el proyecto `ExamenBackendApi`.
+5. Presiona **Instalar** y acepta las condiciones.
+
+También puedes usar la consola de terminal ubicada en la carpeta del proyecto:
+
+```powershell
+dotnet add package Swashbuckle.AspNetCore --version 6.6.2
+```
+
+El archivo `.csproj` debe contener una referencia parecida a esta:
+
+```xml
+<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+```
+
+### 5. Restaurar, compilar y ejecutar
+
+En Visual Studio:
+
+1. Selecciona **Compilar > Compilar solución**.
+2. Comprueba que no existan errores.
+3. Presiona `Ctrl + F5` para ejecutar sin depuración o `F5` para ejecutar con depuración.
+
+También puedes hacerlo desde una terminal:
+
+```powershell
+dotnet restore
+dotnet build
+dotnet run
+```
+
+Visual Studio abrirá la URL configurada en `Properties/launchSettings.json`.
+Si aparece una dirección HTTPS como `https://localhost:62565`, usa ese mismo
+puerto para las siguientes rutas.
+
+### 6. Verificar que todo funciona
+
+Con una URL de ejemplo `https://localhost:62565`, abre:
+
+```text
+https://localhost:62565/
+https://localhost:62565/swagger
+https://localhost:62565/health
+https://localhost:62565/api/usuarios
+```
+
+La primera vez que uses HTTPS de forma local, el navegador puede mostrar una
+advertencia sobre el certificado de desarrollo. Es normal en ASP.NET Core:
+selecciona **Avanzado** y continúa únicamente si estás trabajando en tu equipo.
+
+Si utilizas `dotnet run --urls http://localhost:5000`, las mismas rutas serán:
+
+```text
+http://localhost:5000/
+http://localhost:5000/swagger
+http://localhost:5000/health
+http://localhost:5000/api/usuarios
+```
+
+### 7. Probar el health check
+
+Abre `/health`. Una respuesta correcta debe mostrar `Healthy`, el estado de la
+API y la cantidad de usuarios que están actualmente en memoria. Por ejemplo:
+
+```json
+{
+  "estado": "Healthy",
+  "comprobaciones": {
+    "api": {
+      "estado": "Healthy"
+    },
+    "almacenamiento-en-memoria": {
+      "estado": "Healthy"
+    }
+  }
+}
+```
+
+En este proyecto no se comprueba una base de datos porque la información se
+guarda en una lista en memoria. Al cerrar la aplicación, los usuarios vuelven a
+los dos registros iniciales.
+
 ## Requisitos
 
 - .NET 8 SDK o una versión compatible.
@@ -50,6 +198,46 @@ sin usar Postman. El documento OpenAPI también está disponible en:
 ```text
 http://localhost:5000/swagger/v1/swagger.json
 ```
+
+## Health check
+
+La API tiene un endpoint para revisar su estado y el estado del almacenamiento
+en memoria:
+
+```text
+https://localhost:62565/health
+```
+
+Si ejecutas la aplicación con otra URL o puerto, reemplaza la parte inicial.
+Por ejemplo, con `dotnet run --urls http://localhost:5000` usa:
+
+```text
+http://localhost:5000/health
+```
+
+Una respuesta saludable se parece a:
+
+```json
+{
+  "estado": "Healthy",
+  "comprobaciones": {
+    "api": {
+      "estado": "Healthy",
+      "descripcion": "La API está activa."
+    },
+    "almacenamiento-en-memoria": {
+      "estado": "Healthy",
+      "descripcion": "El almacenamiento en memoria está disponible.",
+      "datos": {
+        "usuariosEnMemoria": 2
+      }
+    }
+  }
+}
+```
+
+Como no existe una base de datos en este proyecto, el segundo check valida el
+repositorio en memoria en lugar de una conexión a base de datos.
 
 También puedes indicar una dirección fija:
 
