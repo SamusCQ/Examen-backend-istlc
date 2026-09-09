@@ -1,0 +1,14 @@
+# Compilación de .NET
+bin/
+obj/
+
+# Archivos de Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs y archivos temporales
+*.log
+*.tmp
