@@ -253,6 +253,81 @@ dotnet run --urls http://localhost:5000
 - `Repositories/IUsuarioRepository.cs`: define las operaciones de acceso a datos.
 - `Repositories/UsuarioRepository.cs`: implementa el almacenamiento en una lista en memoria.
 
+## Diccionario de carpetas y conceptos
+
+Esta sección explica con palabras sencillas para qué sirve cada parte del proyecto.
+
+### `Dtos`
+
+DTO significa **Data Transfer Object**, que en español significa **objeto para
+transferir datos**. Aquí se define la información que el cliente puede enviar a
+la API. Por ejemplo, `CrearUsuarioRequest` recibe `email`, `nombre` y `apellido`.
+El `Id` no se recibe porque lo genera la aplicación.
+
+### `HealthChecks`
+
+Contiene las comprobaciones de estado de la aplicación. En este proyecto,
+`MemoriaHealthCheck` verifica que el repositorio en memoria pueda leerse
+correctamente. Como no usamos base de datos, no se comprueba una conexión a una
+base de datos real.
+
+### `Models`
+
+Contiene los **modelos**, es decir, las clases que representan la información
+principal del sistema. `Usuario.cs` define las propiedades `Id`, `Email`,
+`Nombre` y `Apellido`.
+
+### `Repositories`
+
+Contiene la lógica para guardar y consultar datos. La interfaz
+`IUsuarioRepository` define qué operaciones existen, mientras que
+`UsuarioRepository` explica cómo se realizan usando una lista en memoria.
+Esta separación permite cambiar posteriormente la lista por una base de datos
+sin reescribir todos los endpoints.
+
+### `Program.cs`
+
+Es el archivo principal de la aplicación. Allí se configura el proyecto, se
+registran las dependencias, se activa Swagger, se registra el health check, se
+imprime cada petición en la consola y se definen las rutas HTTP.
+
+### `ExamenBackendApi.csproj`
+
+Es el archivo de configuración del proyecto C#. Indica que se usa .NET 8 y
+contiene el paquete `Swashbuckle.AspNetCore`, necesario para Swagger.
+
+### `Properties/launchSettings.json`
+
+Define cómo Visual Studio inicia la aplicación. Allí se establece que se puede
+usar HTTPS y se configura una dirección como `https://localhost:62565`.
+El puerto puede ser diferente en otro equipo.
+
+### `.gitignore`
+
+Indica a Git qué archivos no debe subir, como `bin`, `obj` y `.vs`, porque son
+archivos generados automáticamente por .NET o Visual Studio.
+
+### Minimal API
+
+Es un estilo de ASP.NET Core que permite crear endpoints con poco código,
+directamente usando métodos como `app.MapGet`, `app.MapPost` y `app.MapDelete`.
+
+### Endpoint
+
+Es una dirección de la API que realiza una operación. Por ejemplo,
+`GET /api/usuarios` obtiene todos los usuarios y `POST /api/usuarios` crea uno.
+
+### Repositorio en memoria
+
+Es la lista donde se guardan temporalmente los usuarios mientras la aplicación
+está encendida. Al cerrar o reiniciar el programa, la lista vuelve a sus dos
+usuarios iniciales porque no se utiliza una base de datos.
+
+### Swagger
+
+Es una interfaz web que muestra los endpoints disponibles y permite probarlos
+sin utilizar Postman. Se abre en la ruta `/swagger`.
+
 ## Usuarios iniciales
 
 Al iniciar la aplicación existen estos dos usuarios:
